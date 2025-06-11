@@ -45,6 +45,26 @@ _FINGERTIP_ALPHA = 1.0
 # Bounds for the uniform distribution from which initial hand offset is sampled.
 _POSITION_OFFSET = 0.05
 
+_DECAY_RATE = 0.95
+
+def cslice(lst, a, b):
+     """ Cricular slice of a list lst.
+         It supports two format. if b excess the length of lst or if b is less than a, append elements from the starting points
+     """
+     length = len(lst)
+     if b>=a:
+         if b > length:
+             _temp_list = lst[a:]
+             remain = b - length
+             while remain > length: # recursively append
+                 _temp_list = _temp_list + lst[:]
+                 remain = remain - length
+             return _temp_list + lst[:remain]
+         else: # normal
+             return lst[a:b]
+     else:
+         return lst[a:] + b[:b]
+
 
 class PianoWithShadowHands(base.PianoTask):
     def __init__(
@@ -62,6 +82,7 @@ class PianoWithShadowHands(base.PianoTask):
         augmentations: Optional[Sequence[base_variation.Variation]] = None,
         energy_penalty_coef: float = _ENERGY_PENALTY_COEF,
         randomize_hand_positions: bool = False,
+        decay_factor: float = 1.0,
         **kwargs,
     ) -> None:
         """Task constructor.
@@ -97,6 +118,9 @@ class PianoWithShadowHands(base.PianoTask):
         """
         super().__init__(arena=stage.Stage(), **kwargs)
 
+        self._slice_music_length = 500
+        self._slice_music_idx = 0
+
         if trim_silence:
             midi = midi.trim_silence()
         self._midi = midi
@@ -126,7 +150,11 @@ class PianoWithShadowHands(base.PianoTask):
         self._reset_trajectory()  # Important: call before adding observables.
         self._add_observables()
         self._set_rewards()
+        self._decay_factor = decay_factor
+        self._decay_tracker = np.ones(88) #TODO: check whether to shift one timestep.
 
+
+        
     def _set_rewards(self) -> None:
         self._reward_fn = composite_reward.CompositeReward(
             key_press_reward=self._compute_key_press_reward,
@@ -147,6 +175,7 @@ class PianoWithShadowHands(base.PianoTask):
         self._t_idx: int = 0
         self._should_terminate: bool = False
         self._discount: float = 1.0
+        self._decay_tracker = np.ones(88)
 
     def _maybe_change_midi(self, random_state: np.random.RandomState) -> None:
         if self._augmentations is not None:
@@ -163,6 +192,16 @@ class PianoWithShadowHands(base.PianoTask):
         note_traj.add_initial_buffer_time(self._initial_buffer_time)
         self._notes = note_traj.notes
         self._sustains = note_traj.sustains
+
+        if self._slice_music_length > 0:
+            # select a slice of notes according to pre-defined length and idx
+            slice_len = int(self._slice_music_length)
+            slice_start_idx = int(self._slice_music_idx)
+            slice_end_idx = int(self._slice_music_idx + slice_len)
+            # cricular slice
+            self._notes = cslice(self._notes, slice_start_idx, slice_end_idx)
+            self._sustains = cslice(self._sustains, slice_start_idx, slice_end_idx)
+
 
     # Composer methods.
 
@@ -279,7 +318,9 @@ class PianoWithShadowHands(base.PianoTask):
     def _compute_key_press_reward(self, physics: mjcf.Physics) -> float:
         """Reward for pressing the right keys at the right time."""
         del physics  # Unused.
+
         on = np.flatnonzero(self._goal_current[:-1])
+        
         rew = 0.0
         # It's possible we have no keys to press at this timestep, so we need to check
         # that `on` is not empty.
@@ -291,6 +332,7 @@ class PianoWithShadowHands(base.PianoTask):
                 margin=(_KEY_CLOSE_ENOUGH_TO_PRESSED * 10),
                 sigmoid="gaussian",
             )
+            rews = rews * self._decay_tracker[on] # apply decay
             rew += 0.5 * rews.mean()
         # If there are any false positives, the remaining 0.5 reward is lost.
         off = np.flatnonzero(1 - self._goal_current[:-1])
@@ -328,6 +370,8 @@ class PianoWithShadowHands(base.PianoTask):
             margin=(_FINGER_CLOSE_ENOUGH_TO_KEY * 10),
             sigmoid="gaussian",
         )
+        on = np.flatnonzero(self._goal_current[:-1])
+        rews = rews * self._decay_tracker[on]
         return float(np.mean(rews))
 
     def _compute_ot_fingering_reward(self, physics: mjcf.Physics) -> float:
@@ -366,6 +410,8 @@ class PianoWithShadowHands(base.PianoTask):
             margin=(_FINGER_CLOSE_ENOUGH_TO_KEY * 10),
             sigmoid="gaussian",
         )
+        on = np.flatnonzero(self._goal_current[:-1])
+        rews = rews * self._decay_tracker[on]
         return float(np.mean(rews))        
 
     def _update_goal_state(self) -> None:
@@ -387,6 +433,10 @@ class PianoWithShadowHands(base.PianoTask):
             keys = [note.key for note in self._notes[t]]
             self._goal_state[i, keys] = 1.0
             self._goal_state[i, -1] = self._sustains[t]
+        
+        _current = self._goal_state[0, :-1] # ignore sustain
+        # if current is 1, decay previous; if 0, reset to 1
+        self._decay_tracker = np.where(_current == 1.0, self._decay_tracker * self._decay_factor, 1.)
 
     def _update_fingering_state(self) -> None:
         if self._t_idx == len(self._notes):
