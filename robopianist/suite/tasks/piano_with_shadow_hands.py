@@ -45,7 +45,6 @@ _FINGERTIP_ALPHA = 1.0
 # Bounds for the uniform distribution from which initial hand offset is sampled.
 _POSITION_OFFSET = 0.05
 
-_DECAY_RATE = 0.95
 
 def cslice(lst, a, b):
      """ Cricular slice of a list lst.
@@ -82,7 +81,6 @@ class PianoWithShadowHands(base.PianoTask):
         augmentations: Optional[Sequence[base_variation.Variation]] = None,
         energy_penalty_coef: float = _ENERGY_PENALTY_COEF,
         randomize_hand_positions: bool = False,
-        decay_factor: float = 1.0,
         **kwargs,
     ) -> None:
         """Task constructor.
@@ -150,9 +148,6 @@ class PianoWithShadowHands(base.PianoTask):
         self._reset_trajectory()  # Important: call before adding observables.
         self._add_observables()
         self._set_rewards()
-        self._decay_factor = decay_factor
-        self._decay_tracker = np.ones(88) #TODO: check whether to shift one timestep.
-
 
         
     def _set_rewards(self) -> None:
@@ -175,7 +170,6 @@ class PianoWithShadowHands(base.PianoTask):
         self._t_idx: int = 0
         self._should_terminate: bool = False
         self._discount: float = 1.0
-        self._decay_tracker = np.ones(88)
 
     def _maybe_change_midi(self, random_state: np.random.RandomState) -> None:
         if self._augmentations is not None:
@@ -332,7 +326,6 @@ class PianoWithShadowHands(base.PianoTask):
                 margin=(_KEY_CLOSE_ENOUGH_TO_PRESSED * 10),
                 sigmoid="gaussian",
             )
-            rews = rews * self._decay_tracker[on] # apply decay
             rew += 0.5 * rews.mean()
         # If there are any false positives, the remaining 0.5 reward is lost.
         off = np.flatnonzero(1 - self._goal_current[:-1])
@@ -370,8 +363,7 @@ class PianoWithShadowHands(base.PianoTask):
             margin=(_FINGER_CLOSE_ENOUGH_TO_KEY * 10),
             sigmoid="gaussian",
         )
-        on = np.flatnonzero(self._goal_current[:-1])
-        rews = rews * self._decay_tracker[on]
+
         return float(np.mean(rews))
 
     def _compute_ot_fingering_reward(self, physics: mjcf.Physics) -> float:
@@ -410,8 +402,7 @@ class PianoWithShadowHands(base.PianoTask):
             margin=(_FINGER_CLOSE_ENOUGH_TO_KEY * 10),
             sigmoid="gaussian",
         )
-        on = np.flatnonzero(self._goal_current[:-1])
-        rews = rews * self._decay_tracker[on]
+
         return float(np.mean(rews))        
 
     def _update_goal_state(self) -> None:
@@ -434,10 +425,6 @@ class PianoWithShadowHands(base.PianoTask):
             self._goal_state[i, keys] = 1.0
             self._goal_state[i, -1] = self._sustains[t]
         
-        _current = self._goal_state[0, :-1] # ignore sustain
-        # if current is 1, decay previous; if 0, reset to 1
-        self._decay_tracker = np.where(_current == 1.0, self._decay_tracker * self._decay_factor, 1.)
-
     def _update_fingering_state(self) -> None:
         if self._t_idx == len(self._notes):
             return
