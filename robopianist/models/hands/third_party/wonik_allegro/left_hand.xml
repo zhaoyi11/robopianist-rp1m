@@ -124,7 +124,13 @@
   </asset>
 
   <worldbody>
-    <body name="palm" quat="0 1 0 1" childclass="allegro_left">
+    <body name="palm" quat="-0.5 0.5 -0.5 -0.5" childclass="allegro_left">
+      <!-- add dof for wrist -->
+      <joint name="wrist_ty" type="slide" pos="0 0 -0.1" axis="0 0 1" range="0. 0.06" damping="24"/>
+      <joint name="wrist_tx" type="slide" pos="0 0 -0.1" axis="0 -1 0" range="-1. 1." damping="24"/>
+      <joint name="wrist_yaw" type="hinge" axis="1 0 0" pos="0 0 -0.1" range="-0.523599 0.174533" damping="24"/>
+      <joint name="wrist_pitch" type="hinge" axis="0 1 0" pos="0 0 -0.1" range="-0.174533 0.174533" damping="24"/>
+
       <geom quat="1 -1 0 0" class="palm_visual" mesh="base_link_left"/>
       <geom class="palm_collision"/>
       <!-- Ring finger -->
@@ -255,5 +261,9 @@
     <position name="tha1" joint="thj1" class="thumb_proximal"/>
     <position name="tha2" joint="thj2" class="thumb_medial"/>
     <position name="tha3" joint="thj3" class="thumb_distal"/>
+    <position name="wrist_pitch" joint="wrist_pitch" kp="300" ctrlrange="-0.174533 0.174533"/> 
+    <position name="wrist_yaw" joint="wrist_yaw" kp="300" ctrlrange="-0.523599 0.174533"/>
+    <position name="wrist_ty" joint="wrist_ty" kp="300" ctrlrange="0. 0.06"/>
+    <position name="wrist_tx" joint="wrist_tx" kp="300" ctrlrange="-1. 1."/>
   </actuator>
 </mujoco>
