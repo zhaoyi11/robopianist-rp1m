@@ -81,6 +81,8 @@ class PianoWithShadowHands(base.PianoTask):
         augmentations: Optional[Sequence[base_variation.Variation]] = None,
         energy_penalty_coef: float = _ENERGY_PENALTY_COEF,
         randomize_hand_positions: bool = False,
+        slice_music_length: int = 500,
+        slice_music_idx: int = 0,
         **kwargs,
     ) -> None:
         """Task constructor.
@@ -116,9 +118,9 @@ class PianoWithShadowHands(base.PianoTask):
         """
         super().__init__(arena=stage.Stage(), **kwargs)
 
-        self._slice_music_length = 500
-        self._slice_music_idx = 0
-
+        self._slice_music_length = slice_music_length
+        self._slice_music_idx = slice_music_idx
+        
         if trim_silence:
             midi = midi.trim_silence()
         self._midi = midi
