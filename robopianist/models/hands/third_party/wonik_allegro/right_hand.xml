@@ -147,6 +147,7 @@
               <geom class="medial_collision"/>
               <body name="ff_distal" pos="0 0 0.0384">
                 <joint name="ffj3" class="distal"/>
+                <site name="ff_tip_site" pos="0.008 0 0.03" rgba="1 1 0 1" size="0.004" type="sphere" group="2"/>
                 <geom class="distal_visual"/>
                 <geom class="distal_collision"/>
                 <body name="ff_tip">
@@ -175,6 +176,7 @@
                 <geom class="distal_visual"/>
                 <geom class="distal_collision"/>
                 <body name="mf_tip">
+                  <site name="mf_tip_site" pos="0.008 0 0.03" rgba="1 1 0 1" size="0.004" type="sphere" group="2"/>
                   <geom class="fingertip_visual"/>
                   <geom class="fingertip_collision"/>
                 </body>
@@ -200,6 +202,7 @@
                 <geom class="distal_visual"/>
                 <geom class="distal_collision"/>
                 <body name="rf_tip">
+                  <site name="rf_tip_site" pos="0.008 0 0.03" rgba="1 1 0 1" size="0.004" type="sphere" group="2"/>
                   <geom class="fingertip_visual"/>
                   <geom class="fingertip_collision"/>
                 </body>
@@ -225,6 +228,7 @@
                 <geom class="visual" mesh="link_15.0"/>
                 <geom class="thumb_distal_collision"/>
                 <body name="th_tip">
+                  <site name="th_tip_site" pos="0.0 0.008 0.045" rgba="1 1 0 1" size="0.004" type="sphere" group="2"/>
                   <geom class="thumbtip_visual"/>
                   <geom class="thumbtip_collision"/>
                 </body>
