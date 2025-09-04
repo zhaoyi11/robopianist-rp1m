@@ -40,6 +40,7 @@ class Piano(composer.Entity):
         name: str = "piano",
         add_actuators: bool = False,
         change_color_on_activation: bool = True,
+        key_scale: float = 1.0,
     ) -> None:
         """Initializes the piano.
 
@@ -56,7 +57,7 @@ class Piano(composer.Entity):
         self._add_actuators = add_actuators
         self._midi_module = midi_module.MidiModule()
 
-        self._mjcf_root = piano_mjcf.build(add_actuators=add_actuators)
+        self._mjcf_root = piano_mjcf.build(add_actuators=add_actuators, key_scale=key_scale)
         self._mjcf_root.model = name
 
         self._parse_mjcf_elements()

@@ -21,13 +21,13 @@ from math import atan
 
 NUM_KEYS = 88
 NUM_WHITE_KEYS = 52
-WHITE_KEY_WIDTH = 0.0225
+WHITE_KEY_WIDTH = 0.0225 
 WHITE_KEY_LENGTH = 0.15
 WHITE_KEY_HEIGHT = WHITE_KEY_WIDTH
 SPACING_BETWEEN_WHITE_KEYS = 0.001
 N_SPACES_BETWEEN_WHITE_KEYS = NUM_WHITE_KEYS - 1
-BLACK_KEY_WIDTH = 0.01
-BLACK_KEY_LENGTH = 0.09
+BLACK_KEY_WIDTH = 0.01 
+BLACK_KEY_LENGTH = 0.09 
 # Unlike the other dimensions, the height of the black key was roughly set such that
 # when a white key is fully depressed, the bottom of the black key is barely visible.
 BLACK_KEY_HEIGHT = 0.018

@@ -21,7 +21,7 @@ from dm_control import composer
 from mujoco_utils import composer_utils
 
 from robopianist import music
-from robopianist.suite.tasks import piano_with_shadow_hands
+from robopianist.suite.tasks import piano_with_shadow_hands, piano_with_allegro_hands, piano_with_orca_hands
 
 # RoboPianist-repertoire-150.
 _BASE_REPERTOIRE_NAME = "RoboPianist-repertoire-150-{}-v0"
@@ -56,6 +56,7 @@ def load(
     recompile_physics: bool = False,
     legacy_step: bool = True,
     task_kwargs: Optional[Mapping[str, Any]] = None,
+    hand_name: str = "shadow",
 ) -> composer.Environment:
     """Loads a RoboPianist environment.
 
@@ -83,9 +84,17 @@ def load(
         midi = music.load(_ALL_DICT[environment_name], stretch=stretch, shift=shift)
 
     task_kwargs = task_kwargs or {}
-
+    if hand_name == "shadow":
+        task = piano_with_shadow_hands.PianoWithShadowHands(midi=midi, **task_kwargs)
+    elif hand_name == "allegro":
+        task = piano_with_allegro_hands.PianoWithAllegroHands(midi=midi, **task_kwargs)
+    elif hand_name == "orca":
+        task = piano_with_orca_hands.PianoWithOrcaHands(midi=midi, **task_kwargs)
+    else:
+        raise ValueError(f"Unknown hand {hand_name}. Available hands: shadow, allegro, orca")
+    # TODO: Add hands selection here.
     return composer_utils.Environment(
-        task=piano_with_shadow_hands.PianoWithShadowHands(midi=midi, **task_kwargs),
+        task=task,
         random_state=seed,
         strip_singleton_obs_buffer_dim=True,
         recompile_physics=recompile_physics,

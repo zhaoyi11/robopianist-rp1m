@@ -65,7 +65,7 @@ def cslice(lst, a, b):
          return lst[a:] + b[:b]
 
 
-class PianoWithShadowHands(base.PianoTask):
+class PianoWithOrcaHands(base.PianoTask):
     def __init__(
         self,
         midi: midi_file.MidiFile,
@@ -116,7 +116,7 @@ class PianoWithShadowHands(base.PianoTask):
             randomize_hand_positions: If True, randomizes the initial position of the
                 hands at the beginning of each episode.
         """
-        super().__init__(arena=stage.Stage(), hand_name="shadow", **kwargs)
+        super().__init__(arena=stage.Stage(), hand_name="orca", **kwargs)
 
         self._slice_music_length = slice_music_length
         self._slice_music_idx = slice_music_idx

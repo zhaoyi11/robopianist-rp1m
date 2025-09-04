@@ -15,6 +15,8 @@
 from robopianist.suite.tasks.base import PianoOnlyTask, PianoTask
 from robopianist.suite.tasks.piano_with_one_shadow_hand import PianoWithOneShadowHand
 from robopianist.suite.tasks.piano_with_shadow_hands import PianoWithShadowHands
+from robopianist.suite.tasks.piano_with_allegro_hands import PianoWithAllegroHands
+from robopianist.suite.tasks.piano_with_orca_hands import PianoWithOrcaHands
 from robopianist.suite.tasks.self_actuated_piano import SelfActuatedPiano
 
 __all__ = [
@@ -23,4 +25,6 @@ __all__ = [
     "SelfActuatedPiano",
     "PianoWithShadowHands",
     "PianoWithOneShadowHand",
+    "PianoWithAllegroHands",
+    "PianoWithOrcaHands",
 ]

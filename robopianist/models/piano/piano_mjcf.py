@@ -22,12 +22,18 @@ from mujoco_utils import types
 from robopianist.models.piano import piano_constants as consts
 
 
-def build(add_actuators: bool = False) -> types.MjcfRootElement:
+def build(add_actuators: bool = False, key_scale: float = 1.0) -> types.MjcfRootElement:
     """Programatically build a piano MJCF.
 
     Args:
         add_actuators: Whether to add actuators to the piano keys.
     """
+    # Scale the key sizes. This is needed for using larger robot hands, e.g., the Allegro Hand.
+    consts.WHITE_KEY_WIDTH *= key_scale
+    consts.WHITE_KEY_LENGTH *= key_scale
+    consts.BLACK_KEY_WIDTH *= key_scale
+    consts.BLACK_KEY_LENGTH *= key_scale
+
     root = mjcf.RootElement()
     root.model = "piano"
 
