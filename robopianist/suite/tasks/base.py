@@ -150,11 +150,11 @@ class PianoTask(PianoOnlyTask):
         control_timestep: float = _CONTROL_TIMESTEP,
     ) -> None:
         # enlarge the key scale for allegro hand
-        # if hand_name == "allegro":
-        #     key_scale = 1.2
-        # else:
-        #     key_scale = 1.0
-        key_scale = 1.1
+        if hand_name == "allegro":
+            key_scale = 1.2
+        else:
+            key_scale = 1.0
+
 
         super().__init__(
             arena=arena,
