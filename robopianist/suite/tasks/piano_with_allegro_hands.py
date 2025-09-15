@@ -365,7 +365,7 @@ class PianoWithAllegroHands(base.PianoTask):
             margin=(_FINGER_CLOSE_ENOUGH_TO_KEY * 10),
             sigmoid="gaussian",
         )
-
+        
         return float(np.mean(rews))
 
     def _compute_ot_fingering_reward(self, physics: mjcf.Physics) -> float:
@@ -404,7 +404,6 @@ class PianoWithAllegroHands(base.PianoTask):
             margin=(_FINGER_CLOSE_ENOUGH_TO_KEY * 10),
             sigmoid="gaussian",
         )
-
         return float(np.mean(rews))        
 
     def _update_goal_state(self) -> None:

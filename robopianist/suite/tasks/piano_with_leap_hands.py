@@ -65,7 +65,7 @@ def cslice(lst, a, b):
          return lst[a:] + b[:b]
 
 
-class PianoWithOrcaHands(base.PianoTask):
+class PianoWithLeapHands(base.PianoTask):
     def __init__(
         self,
         midi: midi_file.MidiFile,
@@ -116,7 +116,7 @@ class PianoWithOrcaHands(base.PianoTask):
             randomize_hand_positions: If True, randomizes the initial position of the
                 hands at the beginning of each episode.
         """
-        super().__init__(arena=stage.Stage(), hand_name="orca", **kwargs)
+        super().__init__(arena=stage.Stage(), hand_name="leap", **kwargs)
 
         self._slice_music_length = slice_music_length
         self._slice_music_idx = slice_music_idx
@@ -388,6 +388,7 @@ class PianoWithOrcaHands(base.PianoTask):
             key_geom_pos[-1] += 0.5 * physics.bind(key_geom).size[2]
             key_geom_pos[0] += 0.35 * physics.bind(key_geom).size[0]
             key_pos.append(key_geom_pos.copy())
+
         # calcualte the distance between keys and fingers
         dist = np.full((len(fingertip_pos), len(key_pos)), 100.)
         for i, finger in enumerate(fingertip_pos):

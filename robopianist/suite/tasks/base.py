@@ -21,7 +21,7 @@ import numpy as np
 from dm_control import composer
 from mujoco_utils import composer_utils, physics_utils
 
-from robopianist.models.hands import HandSide, shadow_hand, allegro_hand, orca_hand
+from robopianist.models.hands import HandSide, shadow_hand, allegro_hand, orca_hand, leap_hand
 from robopianist.models.piano import piano
 
 # Timestep of the physics simulation, in seconds.
@@ -38,10 +38,22 @@ _RIGHT_SHADOW_HAND_POSITION = (0.4, 0.15, 0.13)
 _RIGHT_SHADOW_HAND_QUATERNION = (-1, -1, 1, 1)
 
 # allegro hand
-_LEFT_ALLEGRO_HAND_POSITION = (0.1, -0.2, 0.15)
+_LEFT_ALLEGRO_HAND_POSITION = (0.1, -0.2, 0.13)
 _LEFT_ALLEGRO_HAND_QUATERNION = (0, -0.7071, 0, 0.7071)
-_RIGHT_ALLEGRO_HAND_POSITION = (0.1, 0.2, 0.15)
+_RIGHT_ALLEGRO_HAND_POSITION = (0.1, 0.2, 0.13)
 _RIGHT_ALLEGRO_HAND_QUATERNION = (0, -0.7071, 0, 0.7071)
+
+# leap hand
+_LEFT_LEAP_HAND_POSITION = (0.1, -0.2, 0.15)
+# _LEFT_LEAP_HAND_QUATERNION = (0, 0, 1, 0)
+_LEFT_LEAP_HAND_QUATERNION = (0, 0, 0, 1)
+# _LEFT_LEAP_HAND_QUATERNION = (0, -0.7071, 0, 0.7071)
+# _LEFT_LEAP_HAND_QUATERNION = (0.5, -0.5, -0.5, 0.5)
+_RIGHT_LEAP_HAND_POSITION = (0.1, 0.2, 0.15)
+# _RIGHT_LEAP_HAND_QUATERNION = (0, -0.7071, 0, 0.7071)
+# _RIGHT_LEAP_HAND_QUATERNION = (-1, -1, 1, 1)
+# _RIGHT_LEAP_HAND_QUATERNION = (0, 0, 1, 0)
+_RIGHT_LEAP_HAND_QUATERNION = (0, 0, 0, 1)
 
 # orca hand
 _LEFT_ORCA_HAND_POSITION = (0.23, -0.2, 0.11)
@@ -138,11 +150,12 @@ class PianoTask(PianoOnlyTask):
         control_timestep: float = _CONTROL_TIMESTEP,
     ) -> None:
         # enlarge the key scale for allegro hand
-        if hand_name == "allegro":
-            key_scale = 1.2
-        else:
-            key_scale = 1.0
-        
+        # if hand_name == "allegro":
+        #     key_scale = 1.2
+        # else:
+        #     key_scale = 1.0
+        key_scale = 1.1
+
         super().__init__(
             arena=arena,
             change_color_on_activation=change_color_on_activation,
@@ -151,6 +164,7 @@ class PianoTask(PianoOnlyTask):
             physics_timestep=physics_timestep,
             control_timestep=control_timestep,
         )
+
         if hand_name == "orca":
             self._right_hand = self._add_orca_hand(
                 hand_side=HandSide.RIGHT,
@@ -190,6 +204,29 @@ class PianoTask(PianoOnlyTask):
                 hand_side=HandSide.LEFT,
                 position=_LEFT_ALLEGRO_HAND_POSITION,
                 quaternion=_LEFT_ALLEGRO_HAND_QUATERNION,
+                gravity_compensation=gravity_compensation,
+                primitive_fingertip_collisions=primitive_fingertip_collisions,
+                reduced_action_space=reduced_action_space,
+                attachment_yaw=attachment_yaw,
+                forearm_dofs=forearm_dofs,
+            )
+        
+        elif hand_name == "leap":
+            self._right_hand = self._add_leap_hand(
+                hand_side=HandSide.RIGHT,
+                position=_RIGHT_LEAP_HAND_POSITION,
+                quaternion=_RIGHT_LEAP_HAND_QUATERNION,
+                gravity_compensation=gravity_compensation,
+                primitive_fingertip_collisions=primitive_fingertip_collisions,
+                reduced_action_space=reduced_action_space,
+                attachment_yaw=attachment_yaw,
+                forearm_dofs=forearm_dofs,
+            )
+
+            self._left_hand = self._add_leap_hand(
+                hand_side=HandSide.LEFT,
+                position=_LEFT_LEAP_HAND_POSITION,
+                quaternion=_LEFT_LEAP_HAND_QUATERNION,
                 gravity_compensation=gravity_compensation,
                 primitive_fingertip_collisions=primitive_fingertip_collisions,
                 reduced_action_space=reduced_action_space,
@@ -305,6 +342,59 @@ class PianoTask(PianoOnlyTask):
         joint_range[1] -= position[1]
 
         hand = allegro_hand.AllegroHand(
+            side=hand_side,
+            primitive_fingertip_collisions=primitive_fingertip_collisions,
+            restrict_wrist_yaw_range=False,
+            reduced_action_space=reduced_action_space,
+            forearm_dofs=forearm_dofs,
+        )
+        hand.root_body.pos = position
+
+        # TODO: change the initial pose and the piano key size and action range !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1
+        # Slightly rotate the forearms inwards (Z-axis) to mimic human posture.
+        # rotate_axis = np.asarray([0, 0, 1], dtype=np.float64)
+        # rotate_by = np.zeros(4, dtype=np.float64)
+        # sign = -1 if hand_side == HandSide.LEFT else 1
+        # angle = np.radians(sign * attachment_yaw)
+        # mujoco.mju_axisAngle2Quat(rotate_by, rotate_axis, angle)
+        # final_quaternion = np.zeros(4, dtype=np.float64)
+        # # mujoco.mju_mulQuat(final_quaternion, rotate_by, quaternion)
+        # hand.root_body.quat = final_quaternion
+        hand.root_body.quat = quaternion
+
+        if gravity_compensation:
+            physics_utils.compensate_gravity(hand.mjcf_model)
+
+        # Override forearm translation joint range.
+        forearm_tx_joint = hand.mjcf_model.find("joint", "wrist_tx")
+        if forearm_tx_joint is not None:
+            forearm_tx_joint.range = joint_range
+        forearm_tx_actuator = hand.mjcf_model.find("actuator", "wrist_tx")
+        if forearm_tx_actuator is not None:
+            forearm_tx_actuator.ctrlrange = joint_range
+
+        self._arena.attach(hand)
+        return hand
+
+    # Helper methods.
+    def _add_leap_hand(
+        self,
+        hand_side: HandSide,
+        position,
+        quaternion,
+        gravity_compensation: bool,
+        primitive_fingertip_collisions: bool,
+        reduced_action_space: bool,
+        attachment_yaw: float,
+        forearm_dofs: Sequence[str],
+    ) -> leap_hand.LeapHand:
+        joint_range = [-self._piano.size[1], self._piano.size[1]]
+
+        # Offset the joint range by the hand's initial position.
+        joint_range[0] -= position[1]
+        joint_range[1] -= position[1]
+
+        hand = leap_hand.LeapHand(
             side=hand_side,
             primitive_fingertip_collisions=primitive_fingertip_collisions,
             restrict_wrist_yaw_range=False,

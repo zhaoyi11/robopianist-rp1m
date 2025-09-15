@@ -18,8 +18,8 @@ from absl.testing import absltest
 from dm_control import mjcf
 
 from robopianist.models.piano import piano
-from robopianist.models.piano import piano_constants as consts
 
+NUM_KEYS = 88
 
 class PianoTest(absltest.TestCase):
     def test_compiles_and_steps(self) -> None:
@@ -34,19 +34,19 @@ class PianoTest(absltest.TestCase):
 
     def test_joints(self) -> None:
         robot = piano.Piano()
-        self.assertEqual(len(robot.joints), consts.NUM_KEYS)
+        self.assertEqual(len(robot.joints), NUM_KEYS)
         for joint in robot.joints:
             self.assertEqual(joint.tag, "joint")
 
     def test_keys(self) -> None:
         robot = piano.Piano()
-        self.assertEqual(len(robot.keys), consts.NUM_KEYS)
+        self.assertEqual(len(robot.keys), NUM_KEYS)
         for key in robot.keys:
             self.assertEqual(key.tag, "body")
 
     def test_sorted(self) -> None:
         robot = piano.Piano()
-        for i in range(consts.NUM_KEYS - 1):
+        for i in range(NUM_KEYS - 1):
             self.assertLess(
                 int(robot.keys[i].name.split("_")[-1]),
                 int(robot.keys[i + 1].name.split("_")[-1]),

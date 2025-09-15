@@ -19,9 +19,9 @@ from typing import Callable, List, Optional
 import numpy as np
 from dm_control import mjcf
 
-from robopianist.models.piano import piano_constants
 from robopianist.music import midi_file, midi_message
 
+NUM_KEYS = 88
 
 class MidiModule:
     """The piano sound module.
@@ -40,7 +40,7 @@ class MidiModule:
     def initialize_episode(self, physics: mjcf.Physics) -> None:
         del physics  # Unused.
 
-        self._prev_activation = np.zeros(piano_constants.NUM_KEYS, dtype=bool)
+        self._prev_activation = np.zeros(NUM_KEYS, dtype=bool)
         self._prev_sustain_activation = np.zeros(1, dtype=bool)
         self._midi_messages: List[List[midi_message.MidiMessage]] = []
 

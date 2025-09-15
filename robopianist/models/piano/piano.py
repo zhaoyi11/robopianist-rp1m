@@ -22,7 +22,9 @@ from dm_control.composer.observation import observable
 from mujoco_utils import mjcf_utils, types
 
 from robopianist.models.piano import midi_module, piano_mjcf
-from robopianist.models.piano import piano_constants as piano_consts
+
+
+NUM_KEYS = 88
 
 # Key color when it is pressed.
 _ACTIVATION_COLOR = (0.2, 0.8, 0.2, 1.0)
@@ -165,11 +167,11 @@ class Piano(composer.Entity):
     # Methods.
 
     def _initialize_state(self) -> None:
-        self._state = np.zeros(piano_consts.NUM_KEYS, dtype=np.float64)
+        self._state = np.zeros(NUM_KEYS, dtype=np.float64)
         self._sustain_state = np.zeros(1, dtype=np.float64)
-        self._activation = np.zeros(piano_consts.NUM_KEYS, dtype=bool)
+        self._activation = np.zeros(NUM_KEYS, dtype=bool)
         self._sustain_activation = np.zeros(1, dtype=bool)
-        self._normalized_state = np.zeros(piano_consts.NUM_KEYS, dtype=np.float64)
+        self._normalized_state = np.zeros(NUM_KEYS, dtype=np.float64)
 
     def is_key_black(self, key_id: int) -> bool:
         """Returns True if the piano key id corresponds to a black key."""

@@ -21,7 +21,7 @@ from dm_control import composer
 from mujoco_utils import composer_utils
 
 from robopianist import music
-from robopianist.suite.tasks import piano_with_shadow_hands, piano_with_allegro_hands, piano_with_orca_hands
+from robopianist.suite.tasks import piano_with_shadow_hands, piano_with_allegro_hands, piano_with_orca_hands, piano_with_leap_hands
 
 # RoboPianist-repertoire-150.
 _BASE_REPERTOIRE_NAME = "RoboPianist-repertoire-150-{}-v0"
@@ -88,6 +88,8 @@ def load(
         task = piano_with_shadow_hands.PianoWithShadowHands(midi=midi, **task_kwargs)
     elif hand_name == "allegro":
         task = piano_with_allegro_hands.PianoWithAllegroHands(midi=midi, **task_kwargs)
+    elif hand_name == "leap":
+        task = piano_with_leap_hands.PianoWithLeapHands(midi=midi, **task_kwargs)
     elif hand_name == "orca":
         task = piano_with_orca_hands.PianoWithOrcaHands(midi=midi, **task_kwargs)
     else:

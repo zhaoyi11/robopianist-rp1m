@@ -18,14 +18,14 @@ from robopianist.models.hands import base
 
 
 _HERE = Path(__file__).resolve().parent
-_ALLEGRO_HAND_DIR = _HERE / "third_party" / "wonik_allegro"
+_LEAP_HAND_DIR = _HERE / "third_party" / "leap_hand"
 
 
 FINGERTIP_BODIES: Tuple[str, ...] = (
-    "ff_tip",
-    "mf_tip",
-    "rf_tip",
-    "th_tip",
+    "if_ds",
+    "mf_ds",
+    "rf_ds",
+    "th_ds",
     )
 
 FINGERTIP_COLORS: Tuple[Tuple[float, float, float], ...] = (
@@ -37,9 +37,8 @@ FINGERTIP_COLORS: Tuple[Tuple[float, float, float], ...] = (
 )
 
 # Path to the shadow hand E3M5 XML file.
-RIGHT_ALLEGRO_HAND_XML = _ALLEGRO_HAND_DIR / "right_hand.xml"
-LEFT_ALLEGRO_HAND_XML = _ALLEGRO_HAND_DIR / "left_hand.xml"
-
+RIGHT_LEAP_HAND_XML = _LEAP_HAND_DIR / "right_hand.xml"
+LEFT_LEAP_HAND_XML = _LEAP_HAND_DIR / "left_hand.xml"
 
 @dataclass(frozen=True)
 class Dof:
@@ -55,8 +54,8 @@ _FINGERTIP_OFFSET = 0.03
 _THUMBTIP_OFFSET = 0.045
 
 
-class AllegroHand(base.Hand):
-    """An Allegro Hand."""
+class LeapHand(base.Hand):
+    """An Leap Hand."""
 
     def _build(self, name: Optional[str] = None, 
                side: base.HandSide = base.HandSide.RIGHT,
@@ -65,7 +64,7 @@ class AllegroHand(base.Hand):
                reduced_action_space: bool = False,
                forearm_dofs: Sequence[str] = ("forearm_tx", "forearm_ty")
     )-> None:
-        """Initializes a AllegroHand.
+        """Initializes a LeapHand.
         
         Args:
             name: Name of the hand. Used as a prefix in the MJCF name attributes.
@@ -79,11 +78,11 @@ class AllegroHand(base.Hand):
         """
         if side == base.HandSide.RIGHT:
             self._prefix = "rh_"
-            xml_file = RIGHT_ALLEGRO_HAND_XML
+            xml_file = RIGHT_LEAP_HAND_XML
         elif side == base.HandSide.LEFT:
             self._prefix = "lh_"
-            xml_file = LEFT_ALLEGRO_HAND_XML
-        name = name or self._prefix + "allegro_hand"
+            xml_file = LEFT_LEAP_HAND_XML
+        name = name or self._prefix + "leap_hand"
 
         self._hand_side = side
         self._mjcf_root = mjcf.from_path(str(xml_file))
@@ -99,8 +98,8 @@ class AllegroHand(base.Hand):
 
         self._action_spec = None
     
-    def _build_observables(self) -> "AllegroHandObservables":
-        return AllegroHandObservables(self)
+    def _build_observables(self) -> "LeapHandObservables":
+        return LeapHandObservables(self)
     
     def _parse_mjcf_elements(self) -> None:
         joints = mjcf_utils.safe_find_all(self._mjcf_root, "joint")
@@ -116,24 +115,15 @@ class AllegroHand(base.Hand):
             tip_elem = mjcf_utils.safe_find(
                 self._mjcf_root, "body", self._prefix + tip_name
             )
-            if tip_name == "th_tip":
-                tip_site = tip_elem.add(
-                    "site",
-                    name=tip_name + "_site",
-                    pos=(0.0, 0.0, _THUMBTIP_OFFSET),
-                    type="sphere",
-                    size=(0.004,),
-                    group=composer.SENSOR_SITES_GROUP,
-                )
-            else:
-                tip_site = tip_elem.add(
-                    "site",
-                    name=tip_name + "_site",
-                    pos=(0.0, 0.0, _FINGERTIP_OFFSET),
-                    type="sphere",
-                    size=(0.004,),
-                    group=composer.SENSOR_SITES_GROUP,
-                )
+            offset = _THUMBTIP_OFFSET if tip_name == "thdistal" else _FINGERTIP_OFFSET
+            tip_site = tip_elem.add(
+                "site",
+                name=tip_name + "_site",
+                pos=(0.0, 0.0, offset),
+                type="sphere",
+                size=(0.004,),
+                group=composer.SENSOR_SITES_GROUP,
+            )
             fingertip_sites.append(tip_site)
         self._fingertip_sites = tuple(fingertip_sites)
 
@@ -182,7 +172,7 @@ class AllegroHand(base.Hand):
             tip_elem = mjcf_utils.safe_find(
                 self._mjcf_root, "body", self._prefix + tip_name
             )
-            offset = _THUMBTIP_OFFSET if tip_name == "th_tip" else _FINGERTIP_OFFSET
+            offset = _THUMBTIP_OFFSET if tip_name == "thdistal" else _FINGERTIP_OFFSET
             touch_site = tip_elem.add(
                 "site",
                 name=tip_name + "_touch_site",
@@ -276,10 +266,10 @@ class AllegroHand(base.Hand):
         physics.bind(self.actuators).ctrl = action
 
 
-class AllegroHandObservables(base.HandObservables):
-    """AllegroHand observables."""
+class LeapHandObservables(base.HandObservables):
+    """LeapHand observables."""
 
-    _entity: AllegroHand
+    _entity: LeapHand
 
     @composer.observable
     def actuators_force(self):
